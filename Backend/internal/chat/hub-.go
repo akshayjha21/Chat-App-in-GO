@@ -1,6 +1,10 @@
 package chat
 
-import "log"
+import (
+	"log"
+
+	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/storage/postgres"
+)
 
 // import "golang.org/x/text/message"
 
@@ -9,9 +13,10 @@ type Hub struct {
 	Broadcast  chan []byte
 	Register   chan *Client
 	Unregister chan *Client
+	db         *postgres.Postgres
 }
 
-func NewHub() *Hub {
+func NewHub(db *postgres.Postgres) *Hub {
 	return &Hub{
 		Broadcast:  make(chan []byte),
 		Register:   make(chan *Client),

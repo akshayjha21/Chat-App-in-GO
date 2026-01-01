@@ -13,14 +13,23 @@ import (
 	// "log/slog"
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/chat"
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/config"
+	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/storage/postgres"
 )
 
 func main() {
 
 	cfg := config.MustLoad()
+	//db connection
 
+	log.Printf("Conecting to the database")
+	db,err:=postgres.New(cfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 	//1. hub ko initialize krenge
-	hub := chat.NewHub()
+	hub := chat.NewHub(db)
+	// Get the generic sql.DB object from GORM to close it
+	
 
 	//2. hub ko background me execute krenge
 	go hub.Run()
@@ -54,6 +63,11 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	defer cancel()
+	if sqlDB, err := db.Db.DB(); err == nil {
+		log.Println("Closing database connection...")
+		sqlDB.Close()
+	}
+
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
