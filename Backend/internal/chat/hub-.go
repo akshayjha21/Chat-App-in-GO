@@ -22,6 +22,7 @@ func NewHub(db *postgres.Postgres) *Hub {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
+		db:         db,
 	}
 }
 
@@ -35,14 +36,14 @@ func (h *Hub) Run() {
 				delete(h.Clients, client)
 				close(client.Send)
 			}
-			log.Println("connecting to",client.Conn.RemoteAddr())
-		case message:=<-h.Broadcast:
-			for client:=range h.Clients{
-				select{
-				case client.Send<-message:
+			log.Println("disconnected from", client.Conn.RemoteAddr())
+		case message := <-h.Broadcast:
+			for client := range h.Clients {
+				select {
+				case client.Send <- message:
 				default:
 					close(client.Send)
-					delete(h.Clients,client)
+					delete(h.Clients, client)
 				}
 			}
 		}
