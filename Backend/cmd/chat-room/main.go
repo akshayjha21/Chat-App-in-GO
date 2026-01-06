@@ -37,11 +37,7 @@ func main() {
 	// Isliye hum ek "Closure" (anonymous function) use karenge.
 
 	app.Post("/register",userHandler.Registerhandler)
-	// router.HandleFunc("/ws",
-	// 	func(w http.ResponseWriter, r *http.Request) {
-	// 		chat.ServeWs(hub, w, r)
-	// 	})
-
+	app.Post("login",userHandler.LoginHandler)
 	go func() {
 		log.Printf("Server starting on %s", cfg.Addr)
 		if err := app.Listen(cfg.Addr); err != nil && err != http.ErrServerClosed {

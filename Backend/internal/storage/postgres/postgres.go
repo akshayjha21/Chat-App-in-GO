@@ -39,3 +39,10 @@ func (p *Postgres) RegisterUser(user *types.User) (*types.User, error) {
 	}
 	return user, nil
 }
+func (p *Postgres) GetUser(user  *types.User)(*types.User,error){
+	err:=p.Db.Where(user).First(user).Error;
+	if err!=nil{
+		return nil,err
+	}
+	return user,nil
+}
