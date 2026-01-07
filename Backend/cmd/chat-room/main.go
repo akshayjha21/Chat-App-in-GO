@@ -7,8 +7,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/chat"
-	user "github.com/akshayjha21/Chat-App-in-GO/Backend/internal/chat/Handler"
+	handler "github.com/akshayjha21/Chat-App-in-GO/Backend/internal/chat/Handler"
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/config"
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/storage/postgres"
 	"github.com/gofiber/fiber/v2"
@@ -24,7 +25,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	userHandler := &user.Handler{DB: db}
+	// userHandler := &user.Handler{DB: db}
+	userHandler := &handler.UserHandler{DB: db}
+	chatHandler := &handler.Chathandler{DB: db}
 	//1. hub ko initialize krenge
 	hub := chat.NewHub(db)
 	// Get the generic sql.DB object from GORM to close it
@@ -37,7 +40,9 @@ func main() {
 	// Isliye hum ek "Closure" (anonymous function) use karenge.
 
 	app.Post("/register",userHandler.Registerhandler)
-	app.Post("login",userHandler.LoginHandler)
+	app.Post("/ogin",userHandler.LoginHandler)
+	app.Post("/createRoom",chatHandler.CreateChatRoom)
+
 	go func() {
 		log.Printf("Server starting on %s", cfg.Addr)
 		if err := app.Listen(cfg.Addr); err != nil && err != http.ErrServerClosed {

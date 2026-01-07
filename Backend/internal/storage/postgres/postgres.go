@@ -46,3 +46,9 @@ func (p *Postgres) GetUser(user  *types.User)(*types.User,error){
 	}
 	return user,nil
 }
+func(p *Postgres)RegisterRoom(chatRoom *types.Room)(*types.Room,error){
+	if err := p.Db.Create(chatRoom).Error; err != nil {
+		return nil, err
+	}
+	return chatRoom, nil
+}

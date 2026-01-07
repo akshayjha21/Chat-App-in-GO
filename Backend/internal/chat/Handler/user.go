@@ -1,4 +1,4 @@
-package user
+package handler
 
 import (
 	// "fmt"
@@ -13,25 +13,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type Handler struct {
+type UserHandler struct {
 	DB *postgres.Postgres
 }
-
-type data struct {
-	Id   uint   `json:"Id"`
+type UserResponse struct {
+	Id       uint   `json:"Id"`
 	Name string `json:"Username"`
 }
-type response struct {
-	Status  bool   `json:"Status"`
-	Message string `json:"Message"`
-	Data    *data  `json:"Data,omitempty"`
-}
-
-func (h *Handler) Registerhandler(c *fiber.Ctx) error {
+func (h *UserHandler) Registerhandler(c *fiber.Ctx) error {
 	user := new(types.User)
 
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(response{
+		return c.Status(fiber.StatusBadRequest).JSON(Response{
 			Status:  false,
 			Message: "Invalid request body",
 		})
@@ -40,7 +33,7 @@ func (h *Handler) Registerhandler(c *fiber.Ctx) error {
 
 	// Make sure these field names match your types.User struct!
 	if user.Username == "" || user.Password == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(response{
+		return c.Status(fiber.StatusBadRequest).JSON(Response{
 			Status:  false,
 			Message: "Name and Password are required",
 		})
@@ -54,16 +47,16 @@ func (h *Handler) Registerhandler(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(res)
 }
-func (h *Handler) LoginHandler(c *fiber.Ctx) error {
+func (h *UserHandler) LoginHandler(c *fiber.Ctx) error {
 	user := &types.User{}
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(response{
+		return c.Status(fiber.StatusBadRequest).JSON(Response{
 			Status:  false,
 			Message: "Invalid request body",
 		})
 	}
 	if user.Username == "" || user.Password == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(response{
+		return c.Status(fiber.StatusBadRequest).JSON(Response{
 			Status:  false,
 			Message: "Name and Password are required",
 		})
@@ -79,44 +72,44 @@ func (h *Handler) LoginHandler(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(res)
 }
-func login(db *postgres.Postgres, user *types.User) *response {
+func login(db *postgres.Postgres, user *types.User) *Response {
 	u, err := db.GetUser(&types.User{Username: user.Username})
 	if err != nil {
 		// Specifically check if the record just wasn't found
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &response{Status: false, Message: "Invalid credentials"}
+			return &Response{Status: false, Message: "Invalid credentials"}
 		}
-		// Handle actual database connection errors
-		return &response{Status: false, Message: "Internal server error"}
+		// Handle actual UserResponse base connection errors
+		return &Response{Status: false, Message: "Internal server error"}
 	}
 	if !checkPassword(user.Password, u.Password) {
-		return &response{Status: false, Message: "Invalid password"}
+		return &Response{Status: false, Message: "Invalid password"}
 	}
-	return &response{
+	return &Response{
 		Status:  true,
 		Message: "User login succesfully",
-		// Using map[string]any if your response Data field supports it
-		Data: &data{
+		// Using map[string]any if your Response Data field supports it
+		Data: &UserResponse{
 			Id:   u.ID,
 			Name: u.Username},
 	}
 }
-func register(db *postgres.Postgres, user *types.User) *response {
+func register(db *postgres.Postgres, user *types.User) *Response {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return &response{Status: false, Message: "Error processing password"}
+		return &Response{Status: false, Message: "Error processing password"}
 	}
 	user.Password = string(hashPassword)
 
 	dbUser, err := db.RegisterUser(user)
 	if err != nil {
-		return &response{Status: false, Message: "Error registering user in database"}
+		return &Response{Status: false, Message: "Error registering user in Database"}
 	}
 
-	return &response{
+	return &Response{
 		Status:  true,
 		Message: "User registered succesfully",
-		Data: &data{
+		Data: &UserResponse{
 			Id:   dbUser.ID,
 			Name: dbUser.Username,
 		},
@@ -127,3 +120,6 @@ func checkPassword(plainPassword string, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
 }
+
+//TODO -  JWT Token based authentication
+//TODO - RBAC  

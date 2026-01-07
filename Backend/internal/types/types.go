@@ -11,6 +11,7 @@ type User struct {
 type Room struct {
 	ID        uint   `json:"ID"`
 	Name      string `json:"Name" gorm:"unique;not null"`
+	RoomCode  string `json:"RoomCode" gorm:"unique;not null"`
 	Isprivate bool   `json:"Is_private" gorm:"default:false"`
 }
 type RoomMember struct {
@@ -24,7 +25,7 @@ type Message struct {
 	Content string `json:"content" gorm:"type:text;not null"`
 
 	// Foreign Keys
-	RoomID uint `json:"room_ID" gorm:"index"`//indexing helps in db search
+	RoomID uint `json:"room_ID" gorm:"index"` //indexing helps in db search
 	UserID uint `json:"user_ID" gorm:"index"`
 
 	// Optional: Preload user data (useful for showing sender names in history)
