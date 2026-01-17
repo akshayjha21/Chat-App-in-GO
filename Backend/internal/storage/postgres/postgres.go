@@ -77,3 +77,17 @@ func (p *Postgres) CheckExistingMembers(userid uint, roomid uint) (*types.RoomMe
     // If we get here, the user actually exists.
     return &existingMember, nil
 }
+
+func (p *Postgres)GetRoomMessages(roomId uint)([]types.Message,error){
+	var messages []types.Message
+	err := p.Db.Preload("FromUser").
+		Where("room_id = ?", roomId).
+		Order("created_at asc").
+		Find(&messages).Error
+		 if err != nil {
+        return nil, err 
+    }
+
+    return messages, nil
+
+}

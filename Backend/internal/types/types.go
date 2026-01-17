@@ -24,15 +24,19 @@ type RoomMember struct {
 }
 
 type Message struct {
-    ID        uint      `json:"id" gorm:"primaryKey"`
-    Content   string    `json:"content"`
-    
-    SenderID  uint      `json:"sender_id"`
-    Sender    User      `json:"sender" gorm:"foreignKey:SenderID"`
-    
-    ReceiverID uint     `json:"receiver_id"`
-    Receiver   User     `json:"receiver" gorm:"foreignKey:ReceiverID"`
-    
-    RoomID    uint      `json:"room_id"`
-    CreatedAt time.Time `json:"created_at"`
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Content   string    `json:"content" gorm:"type:text;not null"`
+	
+	// Sender
+	FromID    uint      `json:"from_id" gorm:"index"`
+	FromUser  User      `json:"from_user" gorm:"foreignKey:FromID"`
+	
+	// Receiver (Used for 1-to-1)
+	ToID      *uint     `json:"to_id,omitempty" gorm:"index"`
+	ToUser    *User     `json:"to_user,omitempty" gorm:"foreignKey:ToID"`
+	
+	// Room (Used for Group Chat)
+	RoomID    *uint     `json:"room_id,omitempty" gorm:"index"`
+	
+	CreatedAt time.Time `json:"created_at"`
 }

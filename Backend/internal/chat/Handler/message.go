@@ -12,24 +12,40 @@ type MessageHandler struct {
 type MessageResponse struct{
 	Message []types.Message `json:"Message"`
 }
-func (m *MessageHandler) GetMessages(c *fiber.Ctx) error {
-    // 1. Get RoomID from the URL parameter (e.g., /messages/:roomId)
-    roomIdStr := c.Params("roomId")
-    
-    // 2. Define a slice to hold the messages
-    var messages []types.Message
+func (m *MessageHandler) GetRoomMessages(c *fiber.Ctx) error {
+	
+	var roomId uint
+	if err := c.BodyParser(&roomId); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(Response{
+			Status:  false,
+			Message: "Invalid Request Body",
+		})
+	}
+	res:=getRoomMess(m.DB,roomId)
+	if !res.Status {
+		return c.Status(fiber.StatusInternalServerError).JSON(res)
+	}
+	return c.Status(fiber.StatusCreated).JSON(res)
+	// return c.JSON(messages)
+}
+func getRoomMess(db *postgres.Postgres,roomId uint)*Response{
+	room_msg,err:=db.
+}
+func (m *MessageHandler) GetPrivateMessages(c *fiber.Ctx) error {
+	userA := c.Query("user_id") // The current user
+	userB := c.Params("otherId") // The person they are chatting with
 
-    // 3. Query Postgres using GORM
-    // We use .Preload("User") to automatically join the User table and get sender details
-    // We use .Order("created_at asc") so the chat history is in chronological order
-    result := m.DB.Db.Preload("User").Where("room_id = ?", roomIdStr).Order("created_at asc").Find(&messages)
+	var messages []types.Message
 
-    if result.Error != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": "Could not fetch messages",
-        })
-    }
+	// Query: (from A to B AND room is null) OR (from B to A AND room is null)
+	err := m.DB.Db.Preload("FromUser").
+		Where("(from_id = ? AND to_id = ? AND room_id IS NULL) OR (from_id = ? AND to_id = ? AND room_id IS NULL)", 
+			userA, userB, userB, userA).
+		Order("created_at asc").
+		Find(&messages).Error
 
-    // 4. Return the list of messages as JSON
-    return c.Status(fiber.StatusOK).JSON(messages)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(messages)
 }
