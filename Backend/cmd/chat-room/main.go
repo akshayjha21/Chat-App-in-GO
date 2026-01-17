@@ -35,14 +35,13 @@ func main() {
 	go hub.Run()
 	
 	app:=fiber.New();
-
-
 	app.Post("/register",userHandler.Registerhandler)
 	app.Post("/login",userHandler.LoginHandler)
 	app.Post("/createRoom",chatHandler.CreateChatRoom)
 	app.Post("/joinRoom",chatHandler.JoinRoom)
-	app.Post("/getMyRoom",chatHandler.GetMyRoom)
-	app.Post("/getMessage/:roomId",MessageHandler.GetMessages)
+	app.Post("/getMyRoom",chatHandler.GetMyRooms)
+	app.Get("/getMessage/:roomId",MessageHandler.GetRoomMessages)
+	app.Get("/getMessage/:userA/:userB",MessageHandler.GetPrivateMessage)
 	go func() {
 		log.Printf("Server starting on %s", cfg.Addr)
 		if err := app.Listen(cfg.Addr); err != nil && err != http.ErrServerClosed {

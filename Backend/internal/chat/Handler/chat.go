@@ -82,7 +82,6 @@ func joinRoom(db *postgres.Postgres, code string, userID uint) *Response {
 	}
 	existing, _ := db.CheckExistingMembers(userID, room.ID)
 	if existing != nil && existing.UserID != 0 {
-		// This ensures we only stop if a real record was found
 		return &Response{Status: false, Message: "User already exists in the room"}
 	}
 
@@ -91,19 +90,19 @@ func joinRoom(db *postgres.Postgres, code string, userID uint) *Response {
 	}
 	return &Response{Status: true, Message: "Joined successfully", Data: member.RoomID}
 }
-func (ch *Chathandler) GetMyRoom(c *fiber.Ctx) error {
-	var user types.User
-	if err := c.BodyParser(&user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(Response{
-			Status:  false,
-			Message: "Invalid Request Body",
-		})
-	}
-	res := getRoomsInternal(ch.DB, user.ID)
-	if !res.Status {
-		return c.Status(fiber.StatusInternalServerError).JSON(res)
-	}
-	return c.Status(fiber.StatusCreated).JSON(res)
+func (ch *Chathandler) GetMyRooms(c *fiber.Ctx) error {
+    userID, err := c.ParamsInt("userId")
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(Response{
+            Status:  false,
+            Message: "Invalid User ID",
+        })
+    }
+    res := getRoomsInternal(ch.DB, uint(userID))
+    if !res.Status {
+        return c.Status(fiber.StatusInternalServerError).JSON(res)
+    }
+    return c.Status(fiber.StatusOK).JSON(res)
 }
 func getRoomsInternal(db *postgres.Postgres, userID uint) *Response {
 	rooms, err := db.GetUserRooms(userID)
