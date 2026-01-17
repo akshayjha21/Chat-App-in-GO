@@ -89,5 +89,4 @@ func (p *Postgres)GetRoomMessages(roomId uint)([]types.Message,error){
     }
 
     return messages, nil
-
 }
