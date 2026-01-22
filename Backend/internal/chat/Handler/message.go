@@ -5,7 +5,6 @@ import (
 	"github.com/akshayjha21/Chat-App-in-GO/Backend/internal/types"
 	"github.com/gofiber/fiber/v2"
 )
-
 type MessageHandler struct {
 	DB *postgres.Postgres
 }
@@ -75,3 +74,4 @@ func getPrivateMessage(db *postgres.Postgres, userA, userB uint) *Response {
     }
 }
 //ANCHOR - have to add paggination in the message api
+//ANCHOR - implement Cache-aside pattern and online/offline redis status 
